@@ -19,7 +19,7 @@
 pip install -e .
 ```
 
-Also requires the **MUSCLE** alignment binary on `PATH` — not a pip
+Also requires the **MUSCLE** alignment binary on `PATH`, This is not a pip
 package. See `docs/ENVIRONMENT.md`.
 
 ## Why alignment at all?
