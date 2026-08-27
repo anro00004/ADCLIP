@@ -1,5 +1,8 @@
 # adclip
 
+
+![Plot description](docs/ADCLIP.pdf)
+
 A dual-encoder that projects adenylation (A-)domain sequences and substrates (via their SMILES) 
 into a shared 64-d space (plus everything needed to query it and to extend it with new data):
 
