@@ -1,5 +1,7 @@
 # adclip
 
+![ADCLIP architecture](docs/architecture.png)
+
 A dual-encoder that projects adenylation (A-)domain sequences and substrates (via their SMILES) 
 into a shared 64-d space (plus everything needed to query it and to extend it with new data):
 
@@ -27,40 +29,6 @@ The model is based on a fixed set of 16 specificity-determining residues,
 numbered against the reference sequence (PDB: 1AMU, https://www.rcsb.org/structure/1AMU).
 A raw sequence has no inherent "position 210" until it's aligned against that reference.
 So every new sequence goes through a quick MUSCLE alignment step first
-
-## Architecture
-
-Two independent encoders project into a shared 64-d space, compared by
-cosine similarity. `atp_loss` and `prop_loss` are auxiliary CPT losses
-(weighted by `l_atp`/`l_prop`), not used for plain retrieval.
-
-![ADCLIP architecture](docs/architecture.png)
-
-```mermaid
-graph LR
-    subgraph Substrate side
-        SM[SMILES] --> FP["Morgan fingerprint<br/>1024-bit"]
-        FP --> AAE["aa_encoder<br/>Linear → ReLU → Dropout → Linear"]
-        AAE --> ZAA["z_aa (64-d, normalized)"]
-        AAE --> PH[prop_head]
-        PH --> PD[predicted RDKit descriptors]
-    end
-
-    subgraph A-domain side
-        SEQ[Raw A-domain sequence] --> ALN["MUSCLE alignment vs 1AMU"]
-        ALN --> IG["16 anchor positions (code_idx)"]
-        IG --> OH["16 × one-hot (21-dim each)"]
-        OH --> ADE["16 × adomain_encoders<br/>(per-position MLP)"]
-        ADE --> POOL[mean-pool]
-        POOL --> ZAD["z_ad (64-d, normalized)"]
-    end
-
-    ZAA -->|cosine similarity / temperature| SIM((contrastive loss))
-    ZAD --> SIM
-    ZAA -.L2 distance.-> ATP((atp_loss))
-    ZAD -.L2 distance.-> ATP
-    PD -.MSE vs true descriptors.-> PROP((prop_loss))
-```
 
 ## CLI
 
