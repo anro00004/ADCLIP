@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "adclip"
+version = "0.1.0"
+description = "Dual-encoder A-domain <-> substrate retrieval and continual pretraining"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "torch>=2.1",
+    "pandas>=1.5",
+    "numpy>=1.24",
+    "faiss-cpu>=1.7",
+    "rdkit>=2023.09",
+    "biopython>=1.82",
+    "scikit-learn>=1.3",
+]
+
+[project.scripts]
+adclip = "adclip.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+adclip = ["data/**/*"]
