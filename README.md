@@ -28,11 +28,6 @@ numbered against the reference sequence (PDB: 1AMU, https://www.rcsb.org/structu
 A raw sequence has no inherent "position 210" until it's aligned against that reference.
 So every new sequence goes through a quick MUSCLE alignment step first
 
-## Architecture
-
-Two independent encoders project into a shared 64-d space, compared by
-cosine similarity. `atp_loss` and `prop_loss` are auxiliary CPT losses
-(weighted by `l_atp`/`l_prop`), not used for plain retrieval.
 
 
 ## CLI
