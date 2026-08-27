@@ -34,6 +34,8 @@ Two independent encoders project into a shared 64-d space, compared by
 cosine similarity. `atp_loss` and `prop_loss` are auxiliary CPT losses
 (weighted by `l_atp`/`l_prop`), not used for plain retrieval.
 
+![ADCLIP architecture](docs/architecture.png)
+
 ```mermaid
 graph LR
     subgraph Substrate side
