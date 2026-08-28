@@ -1,4 +1,4 @@
-# adclip
+# ADCLIP
 
 ![ADCLIP architecture](docs/ADCLIP.png)
 
