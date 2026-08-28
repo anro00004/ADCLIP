@@ -1,6 +1,6 @@
 # adclip
 
-![ADCLIP architecture](docs/architecture.png)
+![ADCLIP architecture](docs/ADCLIP.pdf)
 
 ADCLIP frames A-domain specificity as a dual-modality retrieval problem. A substrate encoder and an A-domain encoder jointly map their respective inputs into a shared latent space, where compatibility is measured by cosine similarity. The model is trained contrastively, pulling matched substrate--A-domain pairs together and pushing mismatched pairs apart. At inference, retrieval is bidirectional: given a query substrate, ADCLIP ranks A-domains by similarity, and vice versa.
 
