@@ -2,8 +2,8 @@
 
 ![ADCLIP architecture](docs/architecture.png)
 
-A dual-encoder that projects adenylation (A-)domain sequences and substrates (via their SMILES) 
-into a shared 64-d space (plus everything needed to query it and to extend it with new data):
+ADCLIP frames A-domain specificity as a dual-modality retrieval problem. A substrate encoder and an A-domain encoder jointly map their respective inputs into a shared latent space, where compatibility is measured by cosine similarity. The model is trained contrastively, pulling matched substrate--A-domain pairs together and pushing mismatched pairs apart. At inference, retrieval is bidirectional: given a query substrate, ADCLIP ranks A-domains by similarity, and vice versa.
+
 
 - **`query_adomain`** — give one or more raw A-domain sequences, get every
   known substrate ranked by cosine similarity.
