@@ -78,7 +78,7 @@ model.continue_pretrain("new_pairs.csv", out_checkpoint="my_checkpoint.pt")
 ### Paper checkpoints
 
 `data/checkpoints/paper_checkpoints/` holds the reference checkpoints behind
-the paper's few-shot claim, organized by training step:
+the paper's Continual PreTraining protocol, organized by training step:
 
 ```
 paper_checkpoints/
