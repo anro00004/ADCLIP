@@ -37,12 +37,16 @@ class ADCLIP:
   
     def query_adomain(self, sequences, substrate_smiles: dict = None,
                        pool: str = "training", top_k: int = None,
-                       threads: int = 4) -> pd.DataFrame:
+                       threads: int = 4, aligned_fasta: str = None,
+                       save_alignment_path: str = None) -> pd.DataFrame:
         """
 
         sequences: {id: raw_sequence} dict, or a FASTA path.
         substrate_smiles: optional
         {name: smiles} pool to rank against; None -> the 43-substrate default set of corpus.
+        aligned_fasta: optional precomputed alignment; skips MUSCLE. Must contain the 1AMU row
+        and every query ID.
+        save_alignment_path: optional path to write MUSCLE's alignment to, for reuse as aligned_fasta.
 
         """
         if isinstance(sequences, str):
@@ -52,7 +56,9 @@ class ADCLIP:
         else:
             seq_dict = dict(sequences)
 
-        aligned = alignment.align_new_sequences(seq_dict, pool=pool, threads=threads)
+        aligned = alignment.align_new_sequences(seq_dict, pool=pool, threads=threads,
+                                                aligned_fasta=aligned_fasta,
+                                                save_alignment_path=save_alignment_path)
 
         if substrate_smiles:
             substrate_ids, substrate_latents = substrates_module.custom_substrates_latents(
@@ -74,7 +80,12 @@ class ADCLIP:
    
     def query_substrate(self, smiles: str, corpus_fasta: str = None,
                             pool: str = "training", top_k: int = None,
-                            threads: int = 4) -> pd.DataFrame:
+                            threads: int = 4, aligned_fasta: str = None,
+                            save_alignment_path: str = None) -> pd.DataFrame:
+
+        if corpus_fasta is None and (aligned_fasta is not None or save_alignment_path is not None):
+            raise ValueError("aligned_fasta / save_alignment_path only apply with corpus_fasta; "
+                             "the bundled corpus is already aligned.")
 
         z_aa = substrates_module.generate_latent_from_smiles(self.model, smiles, self.device)
 
@@ -85,7 +96,8 @@ class ADCLIP:
             unresolved_map = {i: [] for i in adomain_ids}
         else:
             adomain_ids, adomain_latents, unresolved_map, code_map, code_idx_map = corpus.build_latent_adomains_from_fasta(
-                self.model, corpus_fasta, self.device, pool=pool, threads=threads)
+                self.model, corpus_fasta, self.device, pool=pool, threads=threads,
+                aligned_fasta=aligned_fasta, save_alignment_path=save_alignment_path)
 
         df = retrieval.rank_against_pool(smiles, z_aa, adomain_ids, adomain_latents,
                                           target_col="a_domain_id", top_k=top_k)
