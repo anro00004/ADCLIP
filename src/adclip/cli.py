@@ -27,14 +27,16 @@ def cmd_query_adomain(args):
     else:
         substrate_smiles = None
     df = model.query_adomain(args.fasta, substrate_smiles=substrate_smiles,
-                              pool=args.alignment_context, top_k=args.top_k, threads=args.threads)
+                              pool=args.alignment_context, top_k=args.top_k, threads=args.threads,
+                              aligned_fasta=args.aligned_fasta, save_alignment_path=args.save_alignment)
     _print_and_save(df, args.out)
 
 
 def cmd_query_substrate(args):
     model = ADCLIP.load(checkpoint=args.checkpoint, device=args.device)
     df = model.query_substrate(args.smiles, corpus_fasta=args.corpus_fasta,
-                                   pool=args.pool, top_k=args.top_k, threads=args.threads)
+                                   pool=args.pool, top_k=args.top_k, threads=args.threads,
+                                   aligned_fasta=args.aligned_fasta, save_alignment_path=args.save_alignment)
     _print_and_save(df, args.out)
 
 
@@ -58,6 +60,11 @@ def build_parser():
     qa.add_argument("--alignment_context", default="training",
                      help='alignment context for the new sequences: "training" (the full bundled '
                           'corpus) or a path to an unaligned FASTA')
+    qa.add_argument("--aligned_fasta", default=None,
+                     help="precomputed alignment (e.g. from --save_alignment); skips MUSCLE. "
+                          "Must contain the 1AMU row and every query ID.")
+    qa.add_argument("--save_alignment", default=None,
+                     help="write MUSCLE's alignment to this FASTA path for reuse via --aligned_fasta")
     qa.add_argument("--checkpoint", default="complete", help="baseline | complete | path to a .pt file")
     qa.add_argument("--top_k", type=int, default=None)
     qa.add_argument("--threads", type=int, default=4, help="MUSCLE alignment threads")
@@ -71,6 +78,13 @@ def build_parser():
                      help="raw/unaligned candidate A-domains (default: bundled training corpus)")
     qs.add_argument("--pool", default="training",
                      help='alignment pool for --corpus-fasta (ignored for the default corpus)')
+    qs.add_argument("--aligned_fasta", default=None,
+                     help="precomputed alignment (e.g. from --save_alignment); skips MUSCLE. "
+                          "Must contain the 1AMU row and every --corpus_fasta ID. "
+                          "Only used with --corpus_fasta.")
+    qs.add_argument("--save_alignment", default=None,
+                     help="write MUSCLE's alignment to this FASTA path for reuse via --aligned_fasta. "
+                          "Only used with --corpus_fasta.")
     qs.add_argument("--checkpoint", default="complete")
     qs.add_argument("--top_k", type=int, default=None)
     qs.add_argument("--threads", type=int, default=4,

@@ -117,38 +117,53 @@ def _load_pool_records(pool: str) -> dict:
 
 
 def align_new_sequences(new_sequences: dict, pool: str = "training", threads: int = 4,
-                         verbose: bool = True) -> dict:
+                         verbose: bool = True, aligned_fasta=None,
+                         save_alignment_path=None) -> dict:
     """new_sequences: {id -> raw unaligned A-domain sequence}.
     Returns {id -> {"code_idx": [16 ints or None], "unresolved_positions": [subset of config.POSITIONS]}}.
+    If aligned_fasta is given, MUSCLE is skipped; the file must contain the 1AMU row
+    (ID 1AMU_1|Chains) and every new sequence ID.
+    save_alignment_path writes MUSCLE's output for reuse.
     """
+
+    if aligned_fasta is not None and save_alignment_path is not None:
+        raise ValueError("save_alignment_path only applies when MUSCLE runs; "
+                         "don't combine it with aligned_fasta.")
+
     ref_records = read_fasta(config.REFERENCE_1AMU_FASTA)
     if len(ref_records) != 1:
         raise AlignmentError(f"Expected exactly one record in {config.REFERENCE_1AMU_FASTA}, "
                               f"found {len(ref_records)}.")
     (ref_id, ref_seq), = ref_records.items()
+    if aligned_fasta is None:
+        pool_records = _load_pool_records(pool)
 
-    pool_records = _load_pool_records(pool)
+        combined = {ref_id: ref_seq, **pool_records, **new_sequences}
+        if len(combined) != 1 + len(pool_records) + len(new_sequences):
+            raise AlignmentError("Duplicate sequence IDs across the reference/pool/new-sequence sets — "
+                                  "every id must be unique.")
 
-    combined = {ref_id: ref_seq, **pool_records, **new_sequences}
-    if len(combined) != 1 + len(pool_records) + len(new_sequences):
-        raise AlignmentError("Duplicate sequence IDs across the reference/pool/new-sequence sets — "
-                              "every id must be unique.")
+        with tempfile.TemporaryDirectory(prefix="adclip_align_") as tmp:
+            tmp = Path(tmp)
+            in_fasta = tmp / "combined.fasta"
+            out_fasta = tmp / "aligned.fasta"
+            write_fasta(combined, in_fasta)
 
-    with tempfile.TemporaryDirectory(prefix="adclip_align_") as tmp:
-        tmp = Path(tmp)
-        in_fasta = tmp / "combined.fasta"
-        out_fasta = tmp / "aligned.fasta"
-        write_fasta(combined, in_fasta)
+            if verbose:
+                print(f"  Aligning {len(new_sequences)} new sequence(s) against 1AMU "
+                      f"+ pool='{pool}' ({len(pool_records)} sequences) with MUSCLE...")
+            run_muscle(in_fasta, out_fasta, threads=threads, verbose=verbose)
+            if save_alignment_path is not None:
+                shutil.copy(out_fasta, save_alignment_path)
 
-        if verbose:
-            print(f"  Aligning {len(new_sequences)} new sequence(s) against 1AMU "
-                  f"+ pool='{pool}' ({len(pool_records)} sequences) with MUSCLE...")
-        run_muscle(in_fasta, out_fasta, threads=threads, verbose=verbose)
-
-        aligned = read_fasta(out_fasta)
+            aligned = read_fasta(out_fasta)
+    else:
+        aligned = read_fasta(aligned_fasta)
 
     if ref_id not in aligned:
-        raise AlignmentError(f"Reference '{ref_id}' missing from MUSCLE output — alignment failed.")
+        raise AlignmentError(f"Reference '{ref_id}' missing. A passed alignment must include the 1AMU "
+                             f"row with this exact ID. Please rerun without a specified alignment fasta "
+                             f"and ADCLIP will create it for you.")
     ref_aligned = aligned[ref_id]
 
     fresh_cols = {pos: _unaligned_to_aligned_pos_1AMU(ref_aligned, pos) for pos in config.POSITIONS}
@@ -157,7 +172,7 @@ def align_new_sequences(new_sequences: dict, pool: str = "training", threads: in
     results = {}
     for seq_id in new_sequences:
         if seq_id not in aligned:
-            raise AlignmentError(f"New sequence '{seq_id}' missing from MUSCLE output.")
+            raise AlignmentError(f"New sequence '{seq_id}' not found in the alignment.")
         code_idx = get_code_idx(aligned[seq_id], aligned_columns)
         unresolved = [pos for pos, code in zip(config.POSITIONS, code_idx) if code is None]
         if verbose and unresolved:

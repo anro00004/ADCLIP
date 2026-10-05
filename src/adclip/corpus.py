@@ -28,9 +28,12 @@ def build_latent_adomains_from_df(model, df: pd.DataFrame, device, id_col="new_d
     return df[id_col].tolist(), latents, code_map, code_idx_map
 
 
-def build_latent_adomains_from_fasta(model, fasta_path, device, pool="training", threads=4):
+def build_latent_adomains_from_fasta(model, fasta_path, device, pool="training", threads=4,
+                                     aligned_fasta=None, save_alignment_path=None):
     raw = alignment.read_fasta(fasta_path)
-    aligned_info = alignment.align_new_sequences(raw, pool=pool, threads=threads)
+    aligned_info = alignment.align_new_sequences(raw, pool=pool, threads=threads,
+                                                 aligned_fasta=aligned_fasta,
+                                                 save_alignment_path=save_alignment_path)
     ids = list(raw)
     ad_emb = np.stack([
         features.build_adomain_onehot(raw[i], aligned_info[i]["code_idx"]) for i in ids

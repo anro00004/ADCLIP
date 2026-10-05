@@ -30,13 +30,28 @@ numbered against the reference sequence (PDB: 1AMU, https://www.rcsb.org/structu
 A raw sequence has no inherent "position 210" until it's aligned against that reference.
 So every new sequence goes through a quick MUSCLE alignment step first
 
+To skip it on later runs, save the alignment once with `--save_alignment` and
+pass it back with `--aligned_fasta`. The saved file contains the 1AMU row and
+your sequence IDs, which is what `--aligned_fasta` requires; you still pass the
+unaligned FASTA (`--fasta` / `--corpus_fasta`) alongside it.
+
+```
+# first run: align with MUSCLE and keep the result
+adclip query_adomain --fasta new.fasta --save_alignment new_aln.fasta
+
+# later runs: skip MUSCLE
+adclip query_adomain --fasta new.fasta --aligned_fasta new_aln.fasta
+```
+
 ## CLI
 
 ```
 adclip query_adomain --fasta new.fasta [--substrates smiles.csv] [--alignment_context training|path.fasta] \
+    [--aligned_fasta aln.fasta | --save_alignment aln.fasta] \
     [--checkpoint baseline|complete|path] [--top_k 20] [--out results.csv]
 
 adclip query_substrate --smiles "..." [--corpus_fasta candidates.fasta] [--pool training|path.fasta] \
+    [--aligned_fasta aln.fasta | --save_alignment aln.fasta] \
     [--checkpoint baseline|complete|path] [--top_k 20] [--out results.csv]
 
 adclip cpt --pairs new_pairs.csv --checkpoint baseline \
@@ -46,6 +61,8 @@ adclip cpt --pairs new_pairs.csv --checkpoint baseline \
 ```
 
 `--substrates smiles.csv` columns: `name,smiles`.
+`--aligned_fasta` / `--save_alignment` for `query_substrate` only apply with
+`--corpus_fasta` (the bundled corpus is already aligned).
 `--pairs new_pairs.csv` columns: `a_domain_sequence`, plus `smiles` (for a
 brand-new substrate) and/or `substrate_name` (for a substrate the checkpoint
 already knows).
