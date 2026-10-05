@@ -75,7 +75,8 @@ from adclip import ADCLIP
 model = ADCLIP.load(checkpoint="complete")  # or "baseline", or a .pt path
 
 # A-domain -> ranked substrates
-df = model.query_adomain({"domain_1": "MSTA...", "domain_2": "GILV..."})
+df = model.query_adomain("new.fasta", save_alignment_path="aln.fasta")   # first run
+df = model.query_adomain("new.fasta", aligned_fasta="aln.fasta")
 
 # substrate -> ranked A-domains (SMILES required)
 df = model.query_substrate("C1CCNC(C1)C(=O)O")
